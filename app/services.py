@@ -4,6 +4,7 @@ from azure.ai.inference.prompts import PromptTemplate
 from azure.search.documents.models import VectorizedQuery
 from azure.ai.inference import EmbeddingsClient
 from langchain_openai import AzureChatOpenAI
+from pathlib import Path
 
 async def get_similar_documents(
     messages: list, 
@@ -15,7 +16,16 @@ async def get_similar_documents(
     context = context or {} 
     top = context.get("overrides", {}).get("top", 5)
     try:
-        intent_prompt = PromptTemplate.from_prompty('assets\\intent_mapping.prompty')
+        # Determine the path in a platform-safe way
+        base = Path(__file__).resolve().parent
+        prompt_path = base / "assets" / "intent_mapping.prompty"
+        if not prompt_path.exists():
+            raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
+
+        # Load the prompt template from file
+        intent_prompt = PromptTemplate.from_prompty(prompt_path)
+
+        # Create chat message list for conversation
         prompt_msgs = intent_prompt.create_messages(conversation=messages)
         resp = chat_model.invoke(
             input=prompt_msgs,
@@ -94,8 +104,13 @@ async def chat_with_products(
         return {"message": documents["message"], "context": documents["context"], "valid_query": False}
     else:
         docs = documents["documents"]
+        # Determine the path in a platform-safe way
+        base = Path(__file__).resolve().parent
+        prompt_path = base / "assets" / "grounded_chat.prompty"
+        if not prompt_path.exists():
+            raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         # do a grounded chat call using the search results
-        grounded_chat_prompt = PromptTemplate.from_prompty('assets\\grounded_chat.prompty')
+        grounded_chat_prompt = PromptTemplate.from_prompty(prompt_path)
         # logger.info(f"messages:{messages}")
         system_message = grounded_chat_prompt.create_messages(documents=docs, context=context)
         # response = chat.chat.completions.create(
