@@ -1,3 +1,9 @@
 fastapi[standard]
 uvicorn
 fastapi-health
+azure-ai-projects
+azure-ai-inference
+azure-search-documents
+pandas
+python-dotenv
+langchain-openai
